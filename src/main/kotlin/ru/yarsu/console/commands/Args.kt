@@ -68,7 +68,7 @@ class Args {
             fileHandler.saveDumpTrucks(truckStorage, trucksFile)
         }
 
-        val app = applicationRoutes(swgStorage, employeeStorage, mapper)
+        val app = applicationRoutes(swgStorage, employeeStorage, truckStorage, mapper)
         val server = port?.let { Netty(it) }?.let { app.asServer(it) }
         Runtime.getRuntime().addShutdownHook(thread)
         server?.start()

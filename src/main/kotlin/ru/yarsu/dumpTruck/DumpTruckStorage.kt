@@ -22,7 +22,7 @@ class DumpTruckStorage(
         return trucks.values.toList()
     }
 
-    fun get(id: UUID): DumpTruck? = trucks[id]
+    operator fun get(id: UUID): DumpTruck? = trucks[id]
 
     fun has(id: UUID): Boolean = trucks.keys.any { it == id }
 }

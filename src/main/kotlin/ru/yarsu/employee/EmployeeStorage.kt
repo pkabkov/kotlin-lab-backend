@@ -13,17 +13,17 @@ class EmployeeStorage(
     }
 
     fun add(employee: Employee) {
-        require(!availabilityInStorageById(employee.id)) {
+        require(!has(employee.id)) {
             "В хранилище уже есть работник с идентификатором ${employee.id}."
         }
         users[employee.id] = employee
     }
 
-    fun get(id: UUID): Employee? = users[id]
+    operator fun get(id: UUID): Employee? = users[id]
 
     fun getValues(): List<Employee>{
         return users.values.toList()
     }
 
-    fun availabilityInStorageById(id: UUID): Boolean = users.keys.any { it == id }
+    fun has(id: UUID): Boolean = users.keys.any { it == id }
 }

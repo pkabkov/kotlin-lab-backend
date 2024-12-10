@@ -20,14 +20,17 @@ class SWGStorage(
 
     fun getValues(): List<SWG> = certificates.values.toList()
 
-    fun get(id: UUID): SWG? = certificates[id]
+    operator fun get(id: UUID): SWG? = certificates[id]
 
     fun add(shipmentCertificate: SWG) {
-        require(!availabilityInStorageById(shipmentCertificate.id)) {
+        require(!has(shipmentCertificate.id)) {
             "В хранилище уже есть акт с таким идентификатором ${shipmentCertificate.id}."
         }
         certificates[shipmentCertificate.id] = shipmentCertificate
     }
 
-    fun availabilityInStorageById(id: UUID): Boolean = certificates.keys.any { it == id }
+    fun has(id: UUID): Boolean = certificates.keys.any { it == id }
+    operator fun set(id: UUID, value: SWG) {
+        certificates[id] = value
+    }
 }
