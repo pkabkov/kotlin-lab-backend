@@ -239,16 +239,16 @@ class NewSwgHandler(
         val dumpTruck = UUID.fromString(dumpTruckField.asText())
         val manager = UUID.fromString(managerField.asText())
 
-        try {
+        return try {
             val id = operation.execute(
                 title, swg, measure, count, price, cost, shipmentDateTime, washing, dumpTruck, manager
             )
-            return Response(Status.CREATED).with(responseLens of jsonFactory.objectNode().apply
+            Response(Status.CREATED).with(responseLens of jsonFactory.objectNode().apply
             {
                 put("Id", id.toString())
             })
         } catch (e: IllegalArgumentException) {
-            return Response(Status.FORBIDDEN).with(responseLens of jsonFactory.objectNode().apply
+            Response(Status.FORBIDDEN).with(responseLens of jsonFactory.objectNode().apply
             {
                 put("Error", e.message)
             })

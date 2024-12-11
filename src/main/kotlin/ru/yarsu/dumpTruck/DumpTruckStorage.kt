@@ -24,5 +24,8 @@ class DumpTruckStorage(
 
     operator fun get(id: UUID): DumpTruck? = trucks[id]
 
+    fun remove(id: UUID) {
+        trucks.remove(id)
+    }
     fun has(id: UUID): Boolean = trucks.keys.any { it == id }
 }

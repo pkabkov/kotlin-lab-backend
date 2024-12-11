@@ -14,16 +14,11 @@ import ru.yarsu.web.operations.PingHandler
 import ru.yarsu.web.operations.v1.GetListByPeriodOperation
 import ru.yarsu.web.operations.v1.GetListByTypeOperation
 import ru.yarsu.web.operations.v1.GetReportOperation
-import ru.yarsu.web.operations.v2.NewSwgOperation
-import ru.yarsu.web.operations.v2.ReplaceSwgOperation
-import ru.yarsu.web.operations.v2.SwgListOperation
+import ru.yarsu.web.operations.v2.*
 import ru.yarsu.web.routes.v1.GetListByPeriodHandler
 import ru.yarsu.web.routes.v1.GetListByTypeHandler
 import ru.yarsu.web.routes.v1.GetReportHandler
-import ru.yarsu.web.routes.v2.NewSwgHandler
-import ru.yarsu.web.routes.v2.ReplaceSwgHandler
-import ru.yarsu.web.routes.v2.SwgInfoHandler
-import ru.yarsu.web.routes.v2.SwgListHandler
+import ru.yarsu.web.routes.v2.*
 
 fun applicationRoutes(
     swgStorage: SWGStorage,
@@ -34,18 +29,35 @@ fun applicationRoutes(
 
     val pingHandler = PingHandler()
     val swgListHandler = SwgListHandler(SwgListOperation(swgStorage))
-    val newSwgHandler = NewSwgHandler(NewSwgOperation(swgStorage,dumpTruckStorage, usersStorage), dumpTruckStorage, usersStorage)
+    val newSwgHandler =
+        NewSwgHandler(NewSwgOperation(swgStorage, dumpTruckStorage, usersStorage), dumpTruckStorage, usersStorage)
     val swgInfoHandler = SwgInfoHandler(swgStorage)
-    val replaceSwgHandler = ReplaceSwgHandler(ReplaceSwgOperation(swgStorage, dumpTruckStorage, usersStorage), swgStorage, dumpTruckStorage, usersStorage)
+    val replaceSwgHandler = ReplaceSwgHandler(
+        ReplaceSwgOperation(swgStorage, dumpTruckStorage, usersStorage),
+        swgStorage,
+        dumpTruckStorage,
+        usersStorage
+    )
     val getListByTypeHandler = GetListByTypeHandler(GetListByTypeOperation(swgStorage), mapper)
     val getListByPeriodHandler = GetListByPeriodHandler(GetListByPeriodOperation(swgStorage), mapper)
     val getReportHandler = GetReportHandler(GetReportOperation(swgStorage), mapper)
+    val dumpTruckInfoHandler = DumpTruckInfoHandler(dumpTruckStorage, DumpTruckInfoOperation(dumpTruckStorage, swgStorage))
+    val dumpTruckDeleteHandler = DumpTruckDeleteHandler(swgStorage, dumpTruckStorage)
+    val getListOfUsersHandler = GetListOfUsersHandler(GetListOfUsersOperation(usersStorage))
+    val registerNewSwgHandler = RegisterNewSwgHandler()
 
     return routes(
         "/ping" bind GET to pingHandler,
         "/v2/shipments/by-type" bind GET to getListByTypeHandler,
         "/v2/shipments/by-period" bind GET to getListByPeriodHandler,
         "/v2/shipments/report" bind GET to getReportHandler,
+        "/v2/dump-trucks/{dump-truck-id}" bind GET to handlerFilter().then(dumpTruckInfoHandler),
+        "/v2/dump-trucks/" bind GET to handlerFilter().then(dumpTruckInfoHandler),
+        "/v2/dump-trucks/{dump-truck-id}" bind Method.DELETE to handlerFilter().then(dumpTruckDeleteHandler),
+        "/v2/dump-trucks/" bind Method.DELETE to handlerFilter().then(dumpTruckDeleteHandler),
+        "/v2/employees" bind GET to handlerFilter().then(getListOfUsersHandler),
+        "/v2/employees/{employee-id}/register-invoice" bind Method.POST to handlerFilter().then(registerNewSwgHandler)
+
 //        "/v2/shipments" bind GET to handlerFilter().then(swgListHandler),
 //        "/v2/shipments" bind Method.POST to handlerFilter().then(newSwgHandler),
 //        "/v2/shipments/{shipment-id}" bind GET to handlerFilter().then(swgInfoHandler),
