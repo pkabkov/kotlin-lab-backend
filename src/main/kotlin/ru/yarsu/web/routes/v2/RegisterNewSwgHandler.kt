@@ -16,7 +16,7 @@ class RegisterNewSwgHandler : HttpHandler {
 
         val titleFiled = FormField.string().required("InvoiceTitle")
         val swgField = FormField.map { value ->
-            if (!SWGType.entries.any { it.description == value }){
+            if (!SWGType.entries.any { it.description == value }) {
                 throw IllegalArgumentException("Ожидается тип ПГС за списка")
             }
             SWGType.entries.find { it.description == value }
@@ -39,9 +39,18 @@ class RegisterNewSwgHandler : HttpHandler {
         val dumpTruckModelField = FormField.string().required("DumpTruckModel")
         val dumpTruckRegistrationField = FormField.string().required("DumpTruckRegistration")
 
-        val feedbackFormBody = Body.webForm(Validator.Feedback, titleFiled, swgField, weightField, priceField, costField).toLens()
+        val feedbackFormBody = Body.webForm(
+            Validator.Feedback,
+            titleFiled,
+            swgField,
+            weightField,
+            priceField,
+            costField,
+            dumpTruckModelField,
+            dumpTruckRegistrationField
+        ).toLens()
         val form = feedbackFormBody(request)
-        if (form.errors.isNotEmpty()){
+        if (form.errors.isNotEmpty()) {
             form.fields.forEach {
                 println(it.key + " " + it.value)
             }
