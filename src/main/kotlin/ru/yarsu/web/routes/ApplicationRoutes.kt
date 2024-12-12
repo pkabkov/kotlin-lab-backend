@@ -44,7 +44,7 @@ fun applicationRoutes(
     val dumpTruckInfoHandler = DumpTruckInfoHandler(dumpTruckStorage, DumpTruckInfoOperation(dumpTruckStorage, swgStorage))
     val dumpTruckDeleteHandler = DumpTruckDeleteHandler(swgStorage, dumpTruckStorage)
     val getListOfUsersHandler = GetListOfUsersHandler(GetListOfUsersOperation(usersStorage))
-    val registerNewSwgHandler = RegisterNewSwgHandler()
+    val registerNewSwgHandler = RegisterNewSwgHandler(swgStorage, dumpTruckStorage, usersStorage)
 
     return routes(
         "/ping" bind GET to pingHandler,

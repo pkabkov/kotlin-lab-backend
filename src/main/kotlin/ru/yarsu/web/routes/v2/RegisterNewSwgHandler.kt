@@ -1,40 +1,76 @@
 package ru.yarsu.web.routes.v2
 
+import com.fasterxml.jackson.databind.node.ArrayNode
 import com.fasterxml.jackson.databind.node.JsonNodeFactory
 import com.fasterxml.jackson.databind.node.ObjectNode
 import org.http4k.core.*
+import org.http4k.core.body.formAsMap
 import org.http4k.format.Jackson
 import org.http4k.format.Jackson.asJsonObject
 import org.http4k.format.Jackson.auto
 import org.http4k.lens.*
+import ru.yarsu.dumpTruck.DumpTruck
+import ru.yarsu.dumpTruck.DumpTruckStorage
+import ru.yarsu.employee.EmployeeStorage
+import ru.yarsu.swg.SWG
+import ru.yarsu.swg.SWGMeasure
+import ru.yarsu.swg.SWGStorage
 import ru.yarsu.swg.SWGType
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
+import java.util.*
 
-class RegisterNewSwgHandler : HttpHandler {
+class RegisterNewSwgHandler(
+    private val swgStorage: SWGStorage,
+    private val dumpTruckStorage: DumpTruckStorage,
+    private val employeeStorage: EmployeeStorage
+) : HttpHandler {
     private val responseLens = Body.auto<ObjectNode>().toLens()
+    private val listLens = Body.auto<ArrayNode>().toLens()
+    private val json = Jackson
+    private val jsonFactory = JsonNodeFactory.instance
 
     override fun invoke(request: Request): Response {
 
+        val idLens = Path.uuid().of("employee-id")
+        try {
+            val id = idLens(request)
+        } catch (e: Exception) {
+            val errorNode = jsonFactory.objectNode()
+            errorNode.set<ObjectNode>(
+                "Error",
+                json.string("Некорректное значение переданного параметра id. Ожидается UUID, но получено текстовое значение")
+            )
+            return Response(Status.BAD_REQUEST).with(responseLens of errorNode)
+        }
+
+        val managerId = idLens(request)
+
         val titleFiled = FormField.string().required("InvoiceTitle")
         val swgField = FormField.map { value ->
-            if (!SWGType.entries.any { it.description == value }) {
-                throw IllegalArgumentException("Ожидается тип ПГС за списка")
+            val type = SWGType.entries.find { it.description == value }
+            if (type == null) {
+                throw IllegalArgumentException()
             }
-            SWGType.entries.find { it.description == value }
+            type
         }.required("InvoiceType")
-        val weightField = FormField.map { value ->
-            if (value.toDoubleOrNull() == null || value.toDouble() <= 0) {
-                throw IllegalArgumentException("Ожидается положительное вещественное число")
+        val weightField = FormField.double().map { value ->
+            if (value <= 0) {
+                throw IllegalArgumentException()
             }
+            value
         }.required("InvoiceWeight")
-        val priceField = FormField.map { value ->
-            if (value.toDoubleOrNull() == null || value.toDouble() <= 0) {
-                throw IllegalArgumentException("Ожидается положительное вещественное число")
+        val priceField = FormField.double().map { value ->
+            if (value <= 0) {
+                throw IllegalArgumentException()
             }
+            value
         }.required("InvoicePrice")
-        val costField = FormField.map { value ->
-            if (value.toDoubleOrNull() == null || value.toDouble() <= 0) {
-                throw IllegalArgumentException("Ожидается положительное вещественное число")
+        val costField = FormField.double().map { value ->
+            if (value <= 0) {
+                throw IllegalArgumentException()
             }
+            value
         }.optional("InvoiceCost")
         val dumpTruckModelField = FormField.string().required("DumpTruckModel")
         val dumpTruckRegistrationField = FormField.string().required("DumpTruckRegistration")
@@ -49,138 +85,136 @@ class RegisterNewSwgHandler : HttpHandler {
             dumpTruckModelField,
             dumpTruckRegistrationField
         ).toLens()
+
         val form = feedbackFormBody(request)
+        val errors = jsonFactory.objectNode()
         if (form.errors.isNotEmpty()) {
-            form.fields.forEach {
-                println(it.key + " " + it.value)
+            for (it in form.errors) {
+                val valueList = form.fields[it.meta.name]
+                if (valueList == null) {
+                    errors.set<ObjectNode>(
+                        it.meta.name, json.obj(
+                            "Value" to json.nullNode(),
+                            "Error" to json.string("Отсутствует поле ${it.meta.name}")
+                        )
+                    )
+                    continue
+                }
+
+                val value = valueList[0]
+                if (it.meta.paramMeta.description == "number") {
+                    if (value.toDoubleOrNull() != null && value.toDouble() <= 0) {
+                        errors.set<ObjectNode>(
+                            it.meta.name, json.obj(
+                                "Value" to json.number(value.toDouble()),
+                                "Error" to json.string("Ожидается положительное вещественное число")
+                            )
+                        )
+                    } else if (value.toBooleanStrictOrNull() != null) {
+                        errors.set<ObjectNode>(
+                            it.meta.name, json.obj(
+                                "Value" to json.boolean(value.toBooleanStrict()),
+                                "Error" to json.string("Ожидается положительное вещественное число")
+                            )
+                        )
+                    } else {
+                        errors.set<ObjectNode>(
+                            it.meta.name, json.obj(
+                                "Value" to json.string(value),
+                                "Error" to json.string("Ожидается положительное вещественное число")
+                            )
+                        )
+                    }
+                    continue
+                }
+
+                errors.set<ObjectNode>(
+                    it.meta.name, json.obj(
+                        "Value" to json.string(value),
+                        "Error" to json.string("Ожидается тип ПГС за списка")
+                    )
+                )
+            }
+
+            return Response(Status.BAD_REQUEST).with(responseLens of errors)
+        }
+
+        if (!employeeStorage.has(managerId)) {
+            val errorNode = jsonFactory.objectNode()
+            errorNode.set<ObjectNode>("EmployeeId", json.string(managerId.toString()))
+            errorNode.set<ObjectNode>("Error", json.string("Работник не найден"))
+            return Response(Status.NOT_FOUND).with(responseLens of errorNode)
+        }
+
+        val title = titleFiled(form)
+        val swgType = swgField(form)
+        val weight = weightField(form)
+        val price = priceField(form)
+        val cost = costField(form) ?: (price * weight)
+        val dumpTruckModel = dumpTruckModelField(form)
+        val dumpTruckRegistration = dumpTruckRegistrationField(form)
+
+
+        val truckList = dumpTruckStorage.getValues()
+            .filter { it.registration == dumpTruckRegistration && it.model == dumpTruckModel }
+        if (truckList.count() > 1) {
+            val errorNode = jsonFactory.arrayNode()
+            truckList
+                .sortedWith(compareBy<DumpTruck> { it.capacity }.thenBy { it.id })
+                .forEach { truck ->
+                    val tmp = jsonFactory.objectNode()
+                    tmp.set<ObjectNode>("Id", json.string(truck.id.toString()))
+                    tmp.set<ObjectNode>("Capacity", json.number(truck.capacity))
+                    tmp.set<ObjectNode>("Volume", json.number(truck.volume))
+                    tmp.set<ObjectNode>(
+                        "ShipmentsCount", json.number(
+                            swgStorage.getValues().count { it.dumpTruck == truck.id }
+                        )
+                    )
+                    errorNode.add(tmp)
+                }
+            return Response(Status.CONFLICT).with(listLens of errorNode)
+        }
+
+        val truck: DumpTruck
+        if (truckList.isEmpty()) {
+            truck = DumpTruck(
+                id = UUID.randomUUID(),
+                model = dumpTruckModel,
+                registration = dumpTruckRegistration,
+                capacity = weight,
+                volume = weight / swgType.density,
+            )
+        } else {
+            truck = truckList[0]
+            if (truck.capacity < weight) {
+                val errorNode = jsonFactory.objectNode()
+                errorNode.set<ObjectNode>(
+                    "Error",
+                    json.string("Вес отгрузки превышает грузоподъёмность кузова самосвала")
+                )
+                return Response(Status.FORBIDDEN).with(responseLens of errorNode)
             }
         }
-//        val json = Jackson
-//        val jsonFactory = JsonNodeFactory.instance
-//
-//        val errors = jsonFactory.objectNode()
-//
-//        println(request.bodyString())
-//        val requestJson = request.bodyString().asJsonObject()
-//        val titleField = requestJson["InvoiceTitle"]
-//        val swgField = requestJson["InvoiceType"]
-//        val weightField = requestJson["InvoiceWeight"]
-//        val priceField = requestJson["InvoicePrice"]
-//        val costField = requestJson["InvoiceCost"]
-//        val dumpTruckModelField = requestJson["DumpTruckModel"]
-//        val dumpTruckRegistrationField = requestJson["DumpTruckRegistration"]
-//
-//        if (titleField == null) {
-//            errors.set<ObjectNode>(
-//                "Title", json.obj(
-//                    "Value" to json.nullNode(),
-//                    "Error" to json.string("Поле Title отсуствует")
-//                )
-//            )
-//        } else if (!titleField.isTextual) {
-//            errors.set<ObjectNode>(
-//                "Title", json.obj(
-//                    "Value" to titleField,
-//                    "Error" to json.string("Ожидается строка")
-//                )
-//            )
-//        }
-//
-//        if (swgField == null) {
-//            errors.set<ObjectNode>(
-//                "SWG", json.obj(
-//                    "Value" to json.nullNode(),
-//                    "Error" to json.string("Поле SWG отсуствует")
-//                )
-//            )
-//        } else {
-//            if (SWGType.entries.find { it.description == swgField.asText() } == null) {
-//                errors.set<ObjectNode>(
-//                    "SWG", json.obj(
-//                        "Value" to swgField,
-//                        "Error" to json.string("Ожидается тип ПГС за списка")
-//                    )
-//                )
-//            }
-//        }
-//
-//        if (weightField == null) {
-//            errors.set<ObjectNode>(
-//                "Weight", json.obj(
-//                    "Value" to json.nullNode(),
-//                    "Error" to json.string("Отсутствует поле Weight")
-//                )
-//            )
-//        } else if (!weightField.isNumber || weightField.asDouble() <= 0) {
-//            errors.set<ObjectNode>(
-//                "Weight", json.obj(
-//                    "Value" to weightField,
-//                    "Error" to json.string("Ожидается положительное вещественное число")
-//                )
-//            )
-//        }
-//
-//        if (priceField == null) {
-//            errors.set<ObjectNode>(
-//                "Price", json.obj(
-//                    "Value" to json.nullNode(),
-//                    "Error" to json.string("Отсутствует поле Price")
-//                )
-//            )
-//        } else if (!priceField.isNumber || priceField.asDouble() <= 0) {
-//            errors.set<ObjectNode>(
-//                "Price", json.obj(
-//                    "Value" to priceField,
-//                    "Error" to json.string("Ожидается положительное вещественное число")
-//                )
-//            )
-//        }
-//
-//        if (costField != null && (!costField.isNumber || costField.asDouble() <= 0)) {
-//            errors.set<ObjectNode>(
-//                "Cost", json.obj(
-//                    "Value" to costField,
-//                    "Error" to json.string("Ожидается положительное вещественное число")
-//                )
-//            )
-//        }
-//
-//        if (dumpTruckModelField == null) {
-//            errors.set<ObjectNode>(
-//                "DumpTruckModel", json.obj(
-//                    "Value" to json.nullNode(),
-//                    "Error" to json.string("Поле DumpTruckModel отсуствует")
-//                )
-//            )
-//        } else if (!dumpTruckModelField.isTextual) {
-//            errors.set<ObjectNode>(
-//                "DumpTruckModel", json.obj(
-//                    "Value" to dumpTruckModelField,
-//                    "Error" to json.string("Ожидается строка")
-//                )
-//            )
-//        }
-//
-//        if (dumpTruckRegistrationField == null) {
-//            errors.set<ObjectNode>(
-//                "DumpTruckRegistration", json.obj(
-//                    "Value" to json.nullNode(),
-//                    "Error" to json.string("Поле DumpTruckRegistration отсуствует")
-//                )
-//            )
-//        } else if (!dumpTruckRegistrationField.isTextual) {
-//            errors.set<ObjectNode>(
-//                "DumpTruckRegistration", json.obj(
-//                    "Value" to dumpTruckRegistrationField,
-//                    "Error" to json.string("Ожидается строка")
-//                )
-//            )
-//        }
-//
-//        if (!errors.isEmpty) {
-//            return Response(Status.BAD_REQUEST).with(responseLens of errors)
-//        }
 
-        return Response(Status.OK)
+        val swg = SWG(
+            id = UUID.randomUUID(),
+            title = title,
+            swgType = swgType,
+            measure = SWGMeasure.T,
+            count = weight,
+            price = price,
+            cost = cost,
+            shipmentDateTime = LocalDateTime.parse(LocalDateTime.now().toString(), DateTimeFormatter.ISO_LOCAL_DATE_TIME),
+            dumpTruck = truck.id,
+            washing = false,
+            manager = managerId,
+        )
+
+        swgStorage.add(swg)
+        val response = jsonFactory.objectNode()
+        response.set<ObjectNode>("ShipmentId", json.string(swg.id.toString()))
+        response.set<ObjectNode>("DumpTruckId", json.string(truck.id.toString()))
+        return Response(Status.CREATED).with(responseLens of response)
     }
 }
