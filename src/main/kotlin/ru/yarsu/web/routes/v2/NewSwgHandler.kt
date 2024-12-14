@@ -54,7 +54,7 @@ class NewSwgHandler(
         val dumpTruckField = requestJson["DumpTruck"]
         val managerField = requestJson["Manager"]
 
-        if (titleField == null) {
+        if (titleField == null || titleField.isTextual && titleField.asText().isBlank()) {
             errors.set<ObjectNode>(
                 "Title", json.obj(
                     "Value" to json.nullNode(),

@@ -46,14 +46,11 @@ class RegisterNewSwgHandler(
 
         val managerId = idLens(request)
 
-        val titleFiled = FormField.string().required("InvoiceTitle")
-        val swgField = FormField.map { value ->
-            val type = SWGType.entries.find { it.description == value }
-            if (type == null) {
-                throw IllegalArgumentException()
-            }
+        val titleFiled = FormField.nonBlankString().required("InvoiceTitle")
+        val swgField = FormField.mapWithNewMeta(nextIn = { value ->
+            val type = SWGType.entries.find { it.description == value } ?: throw IllegalArgumentException()
             type
-        }.required("InvoiceType")
+        }, nextOut = { it.description }, paramMeta = ParamMeta.ObjectParam).required("InvoiceType")
         val weightField = FormField.double().map { value ->
             if (value <= 0) {
                 throw IllegalArgumentException()
@@ -72,8 +69,8 @@ class RegisterNewSwgHandler(
             }
             value
         }.optional("InvoiceCost")
-        val dumpTruckModelField = FormField.string().required("DumpTruckModel")
-        val dumpTruckRegistrationField = FormField.string().required("DumpTruckRegistration")
+        val dumpTruckModelField = FormField.nonBlankString().required("DumpTruckModel")
+        val dumpTruckRegistrationField = FormField.nonBlankString().required("DumpTruckRegistration")
 
         val feedbackFormBody = Body.webForm(
             Validator.Feedback,
@@ -102,36 +99,41 @@ class RegisterNewSwgHandler(
                 }
 
                 val value = valueList[0]
+
+                if (value.isBlank()) {
+                    errors.set<ObjectNode>(
+                        it.meta.name, json.obj(
+                            "Value" to json.nullNode(),
+                            "Error" to json.string("Отсутствует поле ${it.meta.name}")
+                        )
+                    )
+                    continue
+                }
+
                 if (it.meta.paramMeta.description == "number") {
-                    if (value.toDoubleOrNull() != null && value.toDouble() <= 0) {
-                        errors.set<ObjectNode>(
-                            it.meta.name, json.obj(
-                                "Value" to json.number(value.toDouble()),
-                                "Error" to json.string("Ожидается положительное вещественное число")
-                            )
+                    errors.set<ObjectNode>(
+                        it.meta.name, json.obj(
+                            "Value" to json.string(value),
+                            "Error" to json.string("Ожидается положительное вещественное число")
                         )
-                    } else if (value.toBooleanStrictOrNull() != null) {
-                        errors.set<ObjectNode>(
-                            it.meta.name, json.obj(
-                                "Value" to json.boolean(value.toBooleanStrict()),
-                                "Error" to json.string("Ожидается положительное вещественное число")
-                            )
+                    )
+                    continue
+                }
+
+                if (it.meta.paramMeta.description == "object") {
+                    errors.set<ObjectNode>(
+                        it.meta.name, json.obj(
+                            "Value" to json.string(value),
+                            "Error" to json.string("Ожидается тип из ПГС списка")
                         )
-                    } else {
-                        errors.set<ObjectNode>(
-                            it.meta.name, json.obj(
-                                "Value" to json.string(value),
-                                "Error" to json.string("Ожидается положительное вещественное число")
-                            )
-                        )
-                    }
+                    )
                     continue
                 }
 
                 errors.set<ObjectNode>(
                     it.meta.name, json.obj(
                         "Value" to json.string(value),
-                        "Error" to json.string("Ожидается тип ПГС за списка")
+                        "Error" to json.string("Ожидается строка")
                     )
                 )
             }
@@ -205,7 +207,10 @@ class RegisterNewSwgHandler(
             count = weight,
             price = price,
             cost = cost,
-            shipmentDateTime = LocalDateTime.parse(LocalDateTime.now().toString(), DateTimeFormatter.ISO_LOCAL_DATE_TIME),
+            shipmentDateTime = LocalDateTime.parse(
+                LocalDateTime.now().toString(),
+                DateTimeFormatter.ISO_LOCAL_DATE_TIME
+            ),
             dumpTruck = truck.id,
             washing = false,
             manager = managerId,

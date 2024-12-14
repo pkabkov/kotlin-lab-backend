@@ -4,7 +4,19 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="224674e7-1155-4f54-929d-5bd07b53c71d" name="Changes" comment="" />
+    <list default="true" id="224674e7-1155-4f54-929d-5bd07b53c71d" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/kotlin/ru/yarsu/web/operations/v1/GetListOfSWGOperation.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/ru/yarsu/web/operations/v1/GetListOfSWGOperation.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/kotlin/ru/yarsu/web/operations/v2/DumpTruckInfoOperation.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/ru/yarsu/web/operations/v2/DumpTruckInfoOperation.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/kotlin/ru/yarsu/web/operations/v2/SwgListOperation.kt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/kotlin/ru/yarsu/web/routes/ApplicationRoutes.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/ru/yarsu/web/routes/ApplicationRoutes.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/kotlin/ru/yarsu/web/routes/v1/GetListOfSWGHandler.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/ru/yarsu/web/routes/v1/GetListOfSWGHandler.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/kotlin/ru/yarsu/web/routes/v2/NewSwgHandler.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/ru/yarsu/web/routes/v2/NewSwgHandler.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/kotlin/ru/yarsu/web/routes/v2/RegisterNewSwgHandler.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/ru/yarsu/web/routes/v2/RegisterNewSwgHandler.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/kotlin/ru/yarsu/web/routes/v2/SwgInfoHandler.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/ru/yarsu/web/routes/v2/SwgInfoHandler.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/kotlin/ru/yarsu/web/routes/v2/SwgListHandler.kt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/trucks.csv" beforeDir="false" afterPath="$PROJECT_DIR$/trucks.csv" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -27,6 +39,9 @@
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
+  <component name="MarkdownSettingsMigration">
+    <option name="stateVersion" value="1" />
+  </component>
   <component name="ProjectColorInfo">{
   &quot;associatedIndex&quot;: 1
 }</component>
@@ -35,24 +50,47 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "Gradle.Lab3 [run\\].executor": "Run",
-    "Gradle.Lab3 [run].executor": "Run",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "git-widget-placeholder": "develop",
-    "kotlin-language-version-configured": "true",
-    "last_opened_file_path": "E:/kotlin/Lab3",
-    "settings.editor.selected.configurable": "promo.profiler"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;Gradle.Lab3 [run\\].executor&quot;: &quot;Run&quot;,
+    &quot;Gradle.Lab3 [run].executor&quot;: &quot;Run&quot;,
+    &quot;RunOnceActivity.OpenProjectViewOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;develop&quot;,
+    &quot;kotlin-language-version-configured&quot;: &quot;true&quot;,
+    &quot;last_opened_file_path&quot;: &quot;E:/kotlin/Lab3&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;promo.profiler&quot;
   }
-}]]></component>
+}</component>
   <component name="RunAnythingCache">
     <option name="myCommands">
       <command value="gradle run\" />
       <command value="gradle run" />
     </option>
   </component>
-  <component name="RunManager" selected="Gradle.Lab3 [run]">
+  <component name="RunManager" selected="Gradle.D:/kotlin/kotlin-lab-backend [run]">
+    <configuration name="D:/kotlin/kotlin-lab-backend [run]" type="GradleRunConfiguration" factoryName="Gradle" temporary="true">
+      <ExternalSystemSettings>
+        <option name="executionName" />
+        <option name="externalProjectPath" value="$PROJECT_DIR$" />
+        <option name="externalSystemIdString" value="GRADLE" />
+        <option name="scriptParameters" value="" />
+        <option name="taskDescriptions">
+          <list />
+        </option>
+        <option name="taskNames">
+          <list>
+            <option value="run" />
+          </list>
+        </option>
+        <option name="vmOptions" />
+      </ExternalSystemSettings>
+      <ExternalSystemDebugServerProcess>true</ExternalSystemDebugServerProcess>
+      <ExternalSystemReattachDebugProcess>true</ExternalSystemReattachDebugProcess>
+      <DebugAllEnabled>false</DebugAllEnabled>
+      <RunAsTest>false</RunAsTest>
+      <method v="2" />
+    </configuration>
     <configuration name="Lab3 [run]" type="GradleRunConfiguration" factoryName="Gradle" temporary="true">
       <ExternalSystemSettings>
         <option name="executionName" />
@@ -99,6 +137,7 @@
     </configuration>
     <recent_temporary>
       <list>
+        <item itemvalue="Gradle.D:/kotlin/kotlin-lab-backend [run]" />
         <item itemvalue="Gradle.Lab3 [run]" />
         <item itemvalue="Gradle.Lab3 [run\]" />
       </list>
@@ -116,6 +155,15 @@
     <servers />
   </component>
   <component name="XDebuggerManager">
+    <breakpoint-manager>
+      <breakpoints>
+        <line-breakpoint enabled="true" type="kotlin-line">
+          <url>file://$PROJECT_DIR$/src/main/kotlin/ru/yarsu/web/routes/v2/DumpTruckDeleteHandler.kt</url>
+          <line>36</line>
+          <option name="timeStamp" value="3" />
+        </line-breakpoint>
+      </breakpoints>
+    </breakpoint-manager>
     <watches-manager>
       <configuration name="GradleRunConfiguration">
         <watch expression="((RoutedRequest)request).body" custom="org.http4k.routing.RoutedRequest" />
